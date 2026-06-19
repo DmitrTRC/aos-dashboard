@@ -16,6 +16,8 @@ def evaluate(p: Project, cfg: dict) -> tuple[Health, list[str]]:
         red.append("дедлайн просрочен")
     if p.graphify.status == "missing" and p.graphify_required:
         red.append("Graphify отсутствует (required)")
+    if p.security.has_tracked_secret:
+        red.append("в git закоммичен секрет")
 
     if p.git.is_repo and (p.git.staged + p.git.unstaged + p.git.untracked) > 0:
         yellow.append("незакоммиченные изменения")
