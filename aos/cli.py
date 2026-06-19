@@ -229,6 +229,20 @@ def _cmd_serve(args, cfg) -> int:
     return 0
 
 
+def _cmd_dash(args, cfg) -> int:
+    from aos.tui import dash_loop, dash_once
+
+    if args.watch:
+        interval = cfg.get("refresh_interval_sec", 5)
+        try:
+            dash_loop(cfg, conf_path=_conf_path(), color=args.color, interval=interval)
+        except KeyboardInterrupt:
+            print("\nостановлено")
+        return 0
+    print(dash_once(cfg, conf_path=_conf_path(), color=args.color))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     # Two parsers for the shared global flags: the top-level copy carries the
     # real defaults; the per-subcommand copy uses SUPPRESS so a flag given
@@ -293,6 +307,14 @@ def build_parser() -> argparse.ArgumentParser:
     sv.add_argument("--port", type=int, default=None)
     sv.add_argument("--no-browser", action="store_true")
     sv.set_defaults(func=_cmd_serve)
+
+    da = sub.add_parser("dash", parents=[sub_common])
+    da.add_argument("--watch", action="store_true")
+    da.set_defaults(func=_cmd_dash)
+
+    wa = sub.add_parser("wall", parents=[sub_common])
+    wa.add_argument("--watch", action="store_true")
+    wa.set_defaults(func=_cmd_dash)
 
     return parser
 
