@@ -1,0 +1,21 @@
+name: village
+title: "Village EMRG"
+type: app
+stage: build
+priority: high
+tags: []
+deadlines:
+  - { title: "MVP deploy", due: 2026-07-01 }
+progress:
+  mode: auto
+  percent: null
+  plan: null
+graphify:
+  required: false
+  disabled: false
+commands:
+  test: pnpm test
+session:
+  launch: null
+dashboard:
+  show_on_wall: true
