@@ -6,9 +6,16 @@ from pathlib import Path
 from aos.model import SecurityFinding, SecurityFindings
 
 _SECRET_EXT = {".pem", ".key"}
+_EXAMPLE_SUFFIXES = (".example", ".sample", ".template", ".dist", ".tmpl")
+
+
+def _is_example(name: str) -> bool:
+    return any(name.endswith(suf) for suf in _EXAMPLE_SUFFIXES)
 
 
 def _is_secret(name: str) -> bool:
+    if _is_example(name):
+        return False
     return name == "env.bak" or name.startswith(".env") or Path(name).suffix in _SECRET_EXT
 
 
