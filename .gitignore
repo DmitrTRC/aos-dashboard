@@ -1,0 +1,37 @@
+# ── secrets (НИКОГДА не коммитим) ──────────────────────────────
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# ── editor / OS ────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── Claude / OpenCode state ────────────────────────────────────
+.claude/
+.opencode/
+.aider*
+
+# ── build / cache (общие) ──────────────────────────────────────
+node_modules/
+dist/
+build/
+target/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.cache/
+
+# ── databases / dumps ──────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+*.dump
