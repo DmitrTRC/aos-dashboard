@@ -4,19 +4,45 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aos-dashboard"
-version = "0.1.0"
-description = "Local project dashboard / control plane (aos)"
+version = "1.0.0"
+description = "Local project dashboard / control plane (aos) for the kitty + zellij + nvim + claude workflow"
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dmitry Morozov", email = "9984398@gmail.com" }]
+keywords = ["dashboard", "control-plane", "cli", "tui", "zellij", "kitty", "developer-tools"]
 dependencies = ["PyYAML>=6"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+
+[project.urls]
+Homepage = "https://github.com/DmitrTRC/aos-dashboard"
+Repository = "https://github.com/DmitrTRC/aos-dashboard"
+Issues = "https://github.com/DmitrTRC/aos-dashboard/issues"
+Changelog = "https://github.com/DmitrTRC/aos-dashboard/blob/main/CHANGELOG.md"
 
 [project.scripts]
 aos = "aos.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["aos*"]
+
+[tool.setuptools.package-data]
+aos = ["web/*.html"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
