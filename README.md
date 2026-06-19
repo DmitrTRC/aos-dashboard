@@ -21,3 +21,19 @@ aos doctor                 # environment check
 ```
 
 Config lives at `~/.config/aos/config.yaml` (see `configs/config.example.yaml`).
+
+## Actions & web (Plan 2)
+
+```bash
+aos open village-emrg          # open the work session (new kitty window → project)
+aos test village-emrg          # run the whitelisted test command, store result
+aos fetch village-emrg         # git fetch --prune (only network git action)
+aos graphify village-emrg --hook-install   # install the auto-rebuild commit hook
+aos graphify village-emrg                  # graphify update . (free, code-only)
+aos graphify village-emrg --init           # full build (LLM: network + tokens; asks to confirm)
+aos serve                      # local web dashboard at http://127.0.0.1:7777/wall
+```
+
+Safety: only the closed set of action kinds exists; per-project commands are checked
+against `exec_allowlist` and run with `shell=False`; the server binds `127.0.0.1` and
+POST actions require the per-run token in `~/.config/aos/token`.

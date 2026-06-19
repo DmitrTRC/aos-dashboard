@@ -197,6 +197,30 @@ def _cmd_graphify(args, cfg) -> int:
     return 0 if r.ok else 1
 
 
+def _cmd_serve(args, cfg) -> int:
+    import webbrowser
+
+    from aos.server import load_or_create_token, make_server
+
+    port = args.port or cfg["port"]
+    token = load_or_create_token(expand("~/.config/aos/token"))
+    srv = make_server(cfg, port=port, token=token, conf_path=_conf_path())
+    url = f"http://127.0.0.1:{port}/"
+    print(f"aos serve → {url}  (Ctrl+C для выхода)")
+    if not args.no_browser and cfg.get("open_browser", True):
+        try:
+            webbrowser.open(url)
+        except Exception:
+            pass
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        print("\nостановлено")
+    finally:
+        srv.shutdown()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     # Two parsers for the shared global flags: the top-level copy carries the
     # real defaults; the per-subcommand copy uses SUPPRESS so a flag given
@@ -256,6 +280,11 @@ def build_parser() -> argparse.ArgumentParser:
     gf.add_argument("--hook-install", dest="hook_install", action="store_true")
     gf.add_argument("--yes", action="store_true", help="skip confirmation for --init")
     gf.set_defaults(func=_cmd_graphify)
+
+    sv = sub.add_parser("serve", parents=[sub_common])
+    sv.add_argument("--port", type=int, default=None)
+    sv.add_argument("--no-browser", action="store_true")
+    sv.set_defaults(func=_cmd_serve)
 
     return parser
 
