@@ -4,6 +4,8 @@ from pathlib import Path
 
 import yaml
 
+from aos.registry import discover
+
 _STUB = {
     "name": None,
     "title": None,
@@ -45,3 +47,14 @@ def init_project(path: Path, name: str) -> bool:
     stub["title"] = name
     yaml_file.write_text(yaml.safe_dump(stub, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return True
+
+
+def scaffold_missing(cfg: dict, conf_path=None) -> list[str]:
+    """Create a stub .aos/project.yaml for every discovered project lacking one."""
+    refs = discover(roots=cfg["roots"], conf_path=conf_path, exclude_dirs=cfg["exclude_dirs"])
+    created: list[str] = []
+    for r in refs:
+        if not (Path(r.path) / ".aos" / "project.yaml").exists():
+            if init_project(Path(r.path), name=r.name):
+                created.append(r.name)
+    return sorted(created)

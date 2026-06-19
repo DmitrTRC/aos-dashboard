@@ -90,6 +90,11 @@ def _cmd_show(args, cfg) -> int:
 
 
 def _cmd_scan(args, cfg) -> int:
+    if cfg.get("auto_scaffold", False):
+        from aos.scaffold import scaffold_missing
+        created = scaffold_missing(cfg, conf_path=_conf_path())
+        if created:
+            print(f"скаффолд .aos/project.yaml: {', '.join(created)}")
     n = len(_snapshot(cfg))
     print(f"обнаружено проектов: {n}")
     return 0
@@ -203,6 +208,9 @@ def _cmd_serve(args, cfg) -> int:
     from aos.server import load_or_create_token, make_server
 
     port = args.port or cfg["port"]
+    if cfg.get("auto_scaffold", False):
+        from aos.scaffold import scaffold_missing
+        scaffold_missing(cfg, conf_path=_conf_path())
     token = load_or_create_token(expand("~/.config/aos/token"))
     srv = make_server(cfg, port=port, token=token, conf_path=_conf_path())
     url = f"http://127.0.0.1:{port}/"
