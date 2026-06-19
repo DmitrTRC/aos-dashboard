@@ -49,5 +49,7 @@ aos wall            # alias for dash
 The `/wall` web cards and `aos show` now include: live zellij **session** (+ detected
 agents), running **processes** bound to the project, and **security** findings
 (secret-like files; a secret committed to git turns the project red). New projects get a
-stub `.aos/project.yaml` automatically on `aos scan`/`aos serve` (`auto_scaffold: true`),
-or seed it at creation — see `docs/integration-new-project.md`.
+stub `.aos/project.yaml` only when you opt in — set `auto_scaffold: true`
+in `~/.config/aos/config.yaml` (then `aos scan`/`aos serve` seed missing stubs), or run
+`aos init <name>` / `aos init --all` explicitly. Default is off, so read commands never write
+into your repos.

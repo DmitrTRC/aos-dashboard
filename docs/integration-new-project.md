@@ -1,9 +1,9 @@
 # Integration: seed `.aos/project.yaml` in new projects
 
-`aos serve` and `aos scan` already auto-scaffold a stub `.aos/project.yaml` for any
-discovered project (when `auto_scaffold: true`). To seed it at creation time instead,
-add this block to `~/Projects/new-project.sh` just before the first commit
-(after the `docs/` skeleton step):
+`aos init <name>` / `aos init --all` scaffolds a stub `.aos/project.yaml`. If you set
+`auto_scaffold: true`, `aos serve`/`aos scan` also seed missing stubs automatically
+(off by default). To seed it at creation time instead, add this block to
+`~/Projects/new-project.sh` just before the first commit:
 
 ```bash
 # ── .aos/ (project dashboard contract) ─────────────────────────

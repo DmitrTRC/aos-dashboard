@@ -11,7 +11,7 @@ DEFAULT_CONFIG: dict = {
     "port": 7777,
     "refresh_interval_sec": 10,
     "open_browser": True,
-    "auto_scaffold": True,
+    "auto_scaffold": False,
     "tools": {
         "git": "/usr/bin/git",
         "zellij": "/opt/homebrew/bin/zellij",
