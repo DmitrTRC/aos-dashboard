@@ -4,9 +4,12 @@ import json
 import os
 import shlex
 import subprocess
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+
+import yaml
 
 
 class ActionError(Exception):
@@ -77,3 +80,59 @@ def log_action(project_path, result: ActionResult) -> None:
     }
     with (state / "actions.log").open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def _read_yaml(project_path) -> dict:
+    f = Path(project_path) / ".aos" / "project.yaml"
+    if not f.exists():
+        return {}
+    try:
+        return yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return {}
+
+
+def resolve_test_command(project_path, yaml_commands: dict) -> str | None:
+    if yaml_commands.get("test"):
+        return yaml_commands["test"]
+    path = Path(project_path)
+    if (path / "package.json").exists():
+        return "pnpm test"
+    if (path / "pyproject.toml").exists() or (path / "tests").is_dir():
+        return "pytest"
+    return None
+
+
+def _write_tests_state(project_path, exit_code: int, duration: float, command: str) -> None:
+    state = Path(project_path) / ".aos" / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    (state / "tests.json").write_text(json.dumps({
+        "exit_code": exit_code,
+        "duration_sec": duration,
+        "time": datetime.now(timezone.utc).isoformat(),
+        "command": command,
+    }, ensure_ascii=False), encoding="utf-8")
+
+
+def run_tests(project, cfg: dict, runner=subprocess.run) -> ActionResult:
+    cmds = _read_yaml(project.path).get("commands") or {}
+    cmd = resolve_test_command(project.path, cmds)
+    if not cmd:
+        return ActionResult(kind="run_tests", ok=False, message="тест-команда не найдена")
+    argv = validate_command(cmd, cfg["exec_allowlist"])
+    t0 = time.time()
+    try:
+        cp = run_whitelisted(argv, project.path, cfg["timeouts_sec"]["tests"], runner=runner)
+    except subprocess.TimeoutExpired:
+        _write_tests_state(project.path, 124, cfg["timeouts_sec"]["tests"], cmd)
+        r = ActionResult(kind="run_tests", ok=False, command=argv, exit_code=124, message="таймаут")
+        log_action(project.path, r)
+        return r
+    dur = round(time.time() - t0, 2)
+    _write_tests_state(project.path, cp.returncode, dur, cmd)
+    r = ActionResult(
+        kind="run_tests", ok=cp.returncode == 0, command=argv,
+        exit_code=cp.returncode, stdout=cp.stdout[-4000:], stderr=cp.stderr[-4000:],
+    )
+    log_action(project.path, r)
+    return r
