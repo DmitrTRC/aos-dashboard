@@ -66,6 +66,37 @@ class TestState:
 
 
 @dataclass
+class ProcessInfo:
+    pid: int
+    command: str
+    port: Optional[int] = None
+
+
+@dataclass
+class SessionState:
+    active: bool = False
+    session_name: Optional[str] = None
+    agents: list[str] = field(default_factory=list)
+
+
+@dataclass
+class SecurityFinding:
+    path: str
+    kind: str  # env|key|secret
+    tracked: bool = False
+
+
+@dataclass
+class SecurityFindings:
+    findings: list[SecurityFinding] = field(default_factory=list)
+    has_security_md: bool = False
+
+    @property
+    def has_tracked_secret(self) -> bool:
+        return any(f.tracked for f in self.findings)
+
+
+@dataclass
 class Project:
     name: str
     title: str
@@ -82,6 +113,10 @@ class Project:
     progress: ProgressState = field(default_factory=ProgressState)
     deadlines: list[Deadline] = field(default_factory=list)
     tests: TestState = field(default_factory=TestState)
+    processes: list[ProcessInfo] = field(default_factory=list)
+    session: SessionState = field(default_factory=SessionState)
+    security: SecurityFindings = field(default_factory=SecurityFindings)
+    active: bool = False
     health: Health = Health.UNKNOWN
     health_reasons: list[str] = field(default_factory=list)
 
@@ -89,4 +124,5 @@ class Project:
         d = asdict(self)
         d["health"] = self.health.value
         d["git"]["dirty"] = self.git.dirty
+        d["security"]["has_tracked_secret"] = self.security.has_tracked_secret
         return d
