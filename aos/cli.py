@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from aos import __version__
+from aos.actions import ActionError, graphify_action, run_action
 from aos.aggregator import build_all, build_project
 from aos.config import expand, load_config
 from aos.model import Health, Project
@@ -128,6 +129,74 @@ def _cmd_doctor(args, cfg) -> int:
     return 0 if ok else 1
 
 
+def _require(cfg, name):
+    p = _find(cfg, name)
+    if not p:
+        print(f"проект не найден: {name}", file=sys.stderr)
+    return p
+
+
+def _cmd_open(args, cfg) -> int:
+    p = _require(cfg, args.project)
+    if not p:
+        return 1
+    try:
+        r = run_action("open_session", p, cfg)
+    except ActionError as exc:
+        print(f"отказано: {exc}", file=sys.stderr)
+        return 1
+    print(r.message or "открыто")
+    return 0
+
+
+def _cmd_test(args, cfg) -> int:
+    p = _require(cfg, args.project)
+    if not p:
+        return 1
+    try:
+        r = run_action("run_tests", p, cfg)
+    except ActionError as exc:
+        print(f"отказано: {exc}", file=sys.stderr)
+        return 1
+    print(f"tests: {'pass' if r.ok else 'fail'} (exit {r.exit_code}) — {' '.join(r.command)}")
+    if not r.ok and r.message:
+        print(f"  {r.message}")
+    return 0 if r.ok else 1
+
+
+def _cmd_fetch(args, cfg) -> int:
+    p = _require(cfg, args.project)
+    if not p:
+        return 1
+    r = run_action("git_fetch", p, cfg)
+    print(f"git fetch: {'ok' if r.ok else 'fail'} (exit {r.exit_code})")
+    return 0 if r.ok else 1
+
+
+def _cmd_graphify(args, cfg) -> int:
+    p = _require(cfg, args.project)
+    if not p:
+        return 1
+    if args.init:
+        mode, confirm = "init", args.yes
+        if not confirm:
+            reply = input("graphify init ходит в LLM (сеть + токены). Продолжить? [y/N] ").strip().lower()
+            confirm = reply in ("y", "yes", "д", "да")
+        if not confirm:
+            print("отменено")
+            return 1
+        try:
+            r = graphify_action(p, cfg, mode="init", confirm=True)
+        except ActionError as exc:
+            print(f"отказано: {exc}", file=sys.stderr)
+            return 1
+    else:
+        mode = "hook_install" if args.hook_install else "update"
+        r = run_action(f"graphify_{mode}", p, cfg)
+    print(f"graphify {mode}: {'ok' if r.ok else 'fail'} (exit {r.exit_code})")
+    return 0 if r.ok else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     # Two parsers for the shared global flags: the top-level copy carries the
     # real defaults; the per-subcommand copy uses SUPPRESS so a flag given
@@ -167,6 +236,27 @@ def build_parser() -> argparse.ArgumentParser:
     it.set_defaults(func=_cmd_init)
 
     sub.add_parser("doctor", parents=[sub_common]).set_defaults(func=_cmd_doctor)
+
+    op = sub.add_parser("open", parents=[sub_common])
+    op.add_argument("project")
+    op.set_defaults(func=_cmd_open)
+
+    te = sub.add_parser("test", parents=[sub_common])
+    te.add_argument("project")
+    te.set_defaults(func=_cmd_test)
+
+    fe = sub.add_parser("fetch", parents=[sub_common])
+    fe.add_argument("project")
+    fe.set_defaults(func=_cmd_fetch)
+
+    gf = sub.add_parser("graphify", parents=[sub_common])
+    gf.add_argument("project")
+    gf.add_argument("--init", action="store_true")
+    gf.add_argument("--update", action="store_true")
+    gf.add_argument("--hook-install", dest="hook_install", action="store_true")
+    gf.add_argument("--yes", action="store_true", help="skip confirmation for --init")
+    gf.set_defaults(func=_cmd_graphify)
+
     return parser
 
 
