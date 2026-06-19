@@ -71,7 +71,7 @@ class _Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not host_allowed(self.headers.get("Host")):
             return self._json(403, {"error": "bad host"})
-        if self.path == "/" or self.path.startswith("/index.html"):
+        if self.path in ("/", "/wall", "/wall/") or self.path.startswith("/index.html"):
             return self._send(200, _render_index(self.cfg, self.token), "text/html; charset=utf-8")
         if self.path == "/api/projects":
             return self._json(200, [p.to_dict() for p in self._projects()])
