@@ -35,3 +35,5 @@ venv/
 *.sqlite3
 *.db
 *.dump
+.aos/state/
+*.egg-info/
