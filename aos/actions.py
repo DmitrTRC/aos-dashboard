@@ -136,3 +136,51 @@ def run_tests(project, cfg: dict, runner=subprocess.run) -> ActionResult:
     )
     log_action(project.path, r)
     return r
+
+
+def git_fetch(project, cfg: dict, runner=subprocess.run) -> ActionResult:
+    git = cfg["tools"]["git"]
+    argv = [git, "-C", str(project.path), "fetch", "--prune"]
+    cp = run_whitelisted(argv, project.path, cfg["timeouts_sec"]["collector"] * 6, runner=runner)
+    r = ActionResult(
+        kind="git_fetch", ok=cp.returncode == 0, command=argv,
+        exit_code=cp.returncode, stdout=cp.stdout[-2000:], stderr=cp.stderr[-2000:],
+    )
+    log_action(project.path, r)
+    return r
+
+
+def graphify_argv(mode: str, graphify_bin: str) -> list[str]:
+    if mode == "update":
+        return [graphify_bin, "update", "."]
+    if mode == "hook_install":
+        return [graphify_bin, "hook", "install"]
+    if mode == "init":
+        return [graphify_bin, "."]
+    raise ActionError(f"неизвестный режим graphify: {mode}")
+
+
+def graphify_action(project, cfg: dict, mode: str = "update",
+                    confirm: bool = False, runner=subprocess.run) -> ActionResult:
+    if mode == "init" and not confirm:
+        raise ActionError("graphify init требует подтверждения (сеть + расход токенов)")
+    argv = graphify_argv(mode, cfg["tools"]["graphify"])
+    cp = run_whitelisted(argv, project.path, cfg["timeouts_sec"]["graphify"], runner=runner)
+    r = ActionResult(
+        kind=f"graphify_{mode}", ok=cp.returncode == 0, command=argv,
+        exit_code=cp.returncode, stdout=cp.stdout[-2000:], stderr=cp.stderr[-2000:],
+    )
+    log_action(project.path, r)
+    return r
+
+
+def open_report(project, rel_path: str, cfg: dict, spawn=subprocess.Popen) -> ActionResult:
+    base = Path(project.path).resolve()
+    target = (base / rel_path).resolve()
+    if base != target and base not in target.parents:
+        raise ActionError("путь вне проекта")
+    if not target.exists():
+        raise ActionError(f"файл не найден: {rel_path}")
+    argv = ["/usr/bin/open", str(target)]
+    spawn(argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return ActionResult(kind="open_report", ok=True, command=argv)
