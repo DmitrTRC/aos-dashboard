@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import time
@@ -184,3 +185,55 @@ def open_report(project, rel_path: str, cfg: dict, spawn=subprocess.Popen) -> Ac
     argv = ["/usr/bin/open", str(target)]
     spawn(argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return ActionResult(kind="open_report", ok=True, command=argv)
+
+
+_SAFE_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
+
+ACTION_KINDS = {
+    "open_session", "run_tests", "git_fetch",
+    "graphify_update", "graphify_hook_install", "graphify_init", "open_report",
+}
+
+
+def open_session(project, cfg: dict, spawn=subprocess.Popen) -> ActionResult:
+    name = project.name
+    if not _SAFE_NAME.match(name):
+        raise ActionError(f"небезопасное имя проекта: {name!r}")
+    template = cfg["session"]["launch_cmd_template"]
+    cmd = template.format(kitty=cfg["tools"]["kitty"], name=name)
+    try:
+        argv = shlex.split(cmd)
+    except ValueError as exc:
+        raise ActionError(f"не разобрать launch_cmd_template: {exc}") from exc
+    spawn(
+        argv,
+        cwd=str(project.path),
+        start_new_session=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    r = ActionResult(kind="open_session", ok=True, command=argv,
+                     message=f"открыто окно: project {name}")
+    log_action(project.path, r)
+    return r
+
+
+def run_action(kind: str, project, cfg: dict, **opts) -> ActionResult:
+    if kind not in ACTION_KINDS:
+        raise ActionError(f"неизвестное действие: {kind}")
+    if kind == "open_session":
+        return open_session(project, cfg)
+    if kind == "run_tests":
+        return run_tests(project, cfg)
+    if kind == "git_fetch":
+        return git_fetch(project, cfg)
+    if kind == "graphify_update":
+        return graphify_action(project, cfg, mode="update")
+    if kind == "graphify_hook_install":
+        return graphify_action(project, cfg, mode="hook_install")
+    if kind == "graphify_init":
+        return graphify_action(project, cfg, mode="init", confirm=bool(opts.get("confirm", False)))
+    if kind == "open_report":
+        return open_report(project, opts["path"], cfg)
+    raise ActionError(f"необработанное действие: {kind}")  # unreachable guard
