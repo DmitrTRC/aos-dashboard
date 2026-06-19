@@ -70,15 +70,21 @@ function card(p) {
   const prog = pr.percent != null ? pr.percent + "%" : "-";
   const dirty = git.dirty ? "dirty" : "clean";
   const dl = (p.deadlines || []).map(d => `${d.title}: ${d.due}${d.overdue ? " ⚠" : ""}`).join("; ") || "—";
+    const sess = (p.session && p.session.active)
+      ? "● active" + (p.session.agents && p.session.agents.length ? " ("+p.session.agents.join(",")+")" : "")
+      : "idle";
+    const secret = (p.security && p.security.has_tracked_secret) ? " ⚠ secret in git" : "";
+    const body = `<table class="kv">
+      <tr><td>git</td><td class="v">${git.branch||'-'} · ${dirty} · ${diff}${secret}</td></tr>
+      <tr><td>graph</td><td class="v">${g.status||'-'}${g.hook_installed ? ' · hook' : ''}</td></tr>
+      <tr><td>progress</td><td class="v">${prog}</td></tr>
+      <tr><td>session</td><td class="v">${sess}</td></tr>
+      <tr><td>deadline</td><td class="v">${dl}</td></tr>
+    </table>`;
   return `<div class="card">
     <h3><span class="dot ${CLS[p.health]||'u'}"></span>${p.name}
         <span class="meta">${p.type} · ${p.stage}</span></h3>
-    <table class="kv">
-      <tr><td>git</td><td class="v">${git.branch||'-'} · ${dirty} · ${diff}</td></tr>
-      <tr><td>graph</td><td class="v">${g.status||'-'}${g.hook_installed ? ' · hook' : ''}</td></tr>
-      <tr><td>progress</td><td class="v">${prog}</td></tr>
-      <tr><td>deadline</td><td class="v">${dl}</td></tr>
-    </table>
+    ${body}
     <div class="acts">
       <button onclick="act('${p.name}','open_session')">Open</button>
       <button onclick="act('${p.name}','run_tests')">Test</button>
