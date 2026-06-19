@@ -11,17 +11,19 @@ DEFAULT_CONFIG: dict = {
     "port": 7777,
     "refresh_interval_sec": 10,
     "open_browser": True,
+    "auto_scaffold": True,
     "tools": {
         "git": "/usr/bin/git",
         "zellij": "/opt/homebrew/bin/zellij",
         "kitty": "/Applications/kitty.app/Contents/MacOS/kitty",
         "graphify": "graphify",
+        "ps": "/bin/ps",
     },
     "session": {
         "launch_cmd_template": "{kitty} -1 -e /bin/zsh -ic 'project {name}'",
     },
     "exec_allowlist": [
-        "git", "pnpm", "npm", "yarn", "pytest", "python",
+        "git", "pnpm", "npm", "yarn", "pytest", "python", "python3",
         "node", "make", "just", "bats", "graphify", "cargo", "go",
     ],
     "exclude_dirs": [
