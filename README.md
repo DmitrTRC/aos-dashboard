@@ -37,3 +37,17 @@ aos serve                      # local web dashboard at http://127.0.0.1:7777/wa
 Safety: only the closed set of action kinds exists; per-project commands are checked
 against `exec_allowlist` and run with `shell=False`; the server binds `127.0.0.1` and
 POST actions require the per-run token in `~/.config/aos/token`.
+
+## Sensors & TUI (Plan 3)
+
+```bash
+aos dash            # one-shot ANSI board (health, git, graph, progress, session)
+aos dash --watch    # live board, refreshes every refresh_interval_sec
+aos wall            # alias for dash
+```
+
+The `/wall` web cards and `aos show` now include: live zellij **session** (+ detected
+agents), running **processes** bound to the project, and **security** findings
+(secret-like files; a secret committed to git turns the project red). New projects get a
+stub `.aos/project.yaml` automatically on `aos scan`/`aos serve` (`auto_scaffold: true`),
+or seed it at creation — see `docs/integration-new-project.md`.
