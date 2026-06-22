@@ -45,3 +45,10 @@ Pre-brainstorm минимум. Стек и команды появятся в с
 
 ### Архитектурные решения
 <ADR-light, по 1-2 строки на решение>
+
+## Documentation lookups (Context7)
+Always use Context7 when I need library/API documentation, code generation, setup or configuration steps.
+
+## Task Master AI Instructions
+**Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
+@./.taskmaster/CLAUDE.md
